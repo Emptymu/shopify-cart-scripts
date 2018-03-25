@@ -1,4 +1,4 @@
-# By [x, y, z, ...] products, get discounted [a, b, c, ...] products
+# Buy [x, y, z, ...] products, get discounted [a, b, c, ...] products
 
 class ListHasItemSelector
   # Check if an list has an item
