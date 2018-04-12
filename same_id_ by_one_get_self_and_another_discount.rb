@@ -1,5 +1,4 @@
-# BOGO campaign without spliting line item
-# Apply discount to individual products in a line item
+# Buy one product get this one and another one discounted
 
 class PercentageDiscount
 
