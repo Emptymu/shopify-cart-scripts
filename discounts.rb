@@ -53,7 +53,7 @@ class PercentageDiscountPerProduct
   end
 end
 
-class FixAmountDiscountPerProduct
+class FixedAmountDiscountPerProduct
   def initialize(amount, message)
     # Calculate the percentage, while ensuring that Decimal values are used in
     # order to maintain precision.
