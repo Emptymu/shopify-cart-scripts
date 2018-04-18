@@ -17,6 +17,7 @@ class PercentageDiscount
   end
 end
 
+# Select every two items
 class EveryTwoLowToHighPartitioner
   def partition(cart, applicable_line_items)
     # Sort the items by price from low to high
