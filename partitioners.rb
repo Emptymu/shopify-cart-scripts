@@ -88,7 +88,7 @@ class PartitionerNoSplit
   end
 end
 
-# Low to high with split and select every two items
+# Low to high with split and select every X items
 class EveryXPartitioner
   def initialize(paid_item_count)
     @paid_item_count = paid_item_count
@@ -130,6 +130,7 @@ class EveryXPartitioner
   end
 end
 
+# Low to high with split and get Y every X (not including X)
 class EveryXGetYPartitioner
   def initialize(paid_item_count, discounted_item_count)
     @paid_item_count = paid_item_count
