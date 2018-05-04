@@ -23,9 +23,11 @@ class BuyOneGetAnotherPartitioner
     sorted_items = applicable_line_items.sort_by{|line_item| line_item.variant.price}
     # Find the total quantity of items
     total_applicable_quantity = sorted_items.map(&:quantity).reduce(0, :+)
+    # Find the total quantity of paid items
+    total_paid_quantity = paid_items.map(&:quantity).reduce(0, :+);
     # Find the quantity of items that must be discounted
-    discounted_items_remaining = @paid_item_count == 'any' ? @discounted_item_count : Integer(@discounted_item_count * (total_applicable_quantity - total_applicable_quantity%@paid_item_count)/@paid_item_count)
-
+    discounted_items_remaining = @paid_item_count == 'any' ? @discounted_item_count : Integer(total_paid_quantity/@paid_item_count) * @discounted_item_count
+    
     # Create an array of items to return
     discounted_items = []
 
