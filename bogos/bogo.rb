@@ -1,5 +1,4 @@
 class TagSelector
-
   def initialize(tag)
     @tag = tag
   end
@@ -10,7 +9,6 @@ class TagSelector
 end
 
 class PercentageDiscount
-
   def initialize(percent, message)
     @percent = Decimal.new(percent) / 100.0
     @message = message
@@ -89,7 +87,6 @@ class LowToHighPartitioner
 end
 
 class BogoCampaign
-
   def initialize(selector, discount, partitioner)
     @selector = selector
     @discount = discount
@@ -100,6 +97,7 @@ class BogoCampaign
     applicable_items = cart.line_items.select do |line_item|
       @selector.match?(line_item)
     end
+    
     discounted_items = @partitioner.partition(cart, applicable_items)
 
     discounted_items.each do |line_item|
