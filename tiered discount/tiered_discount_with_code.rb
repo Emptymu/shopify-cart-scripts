@@ -1,3 +1,21 @@
+# Tiered discount based on total spent before discount
+
+class TagSelector
+  def initialize(item)
+    @item = item
+  end
+
+  def match?(line_item)
+    return line_item.variant.product.tags.include?(@item)
+  end
+end
+
+class PlaceholderSelector
+  def match?(line_item)
+    return true
+  end
+end
+
 class PercentageDiscountPerLineItem
   def initialize(percent, message)
     # Calculate the percentage, while ensuring that Decimal values are used in
@@ -23,52 +41,66 @@ class PercentageDiscountPerLineItem
   end
 end
 
-# Discount tier shuld follow the follwoing pattern
-# [price_1_in_cents, price_2_in_cents] => percentage
-TIERS = {
-  [10000, 15000]  => 10,
-  [15000, 25000] => 15,
-  [25000, Float::INFINITY] => 20
-}
-
-def isApplicable?(tiers)
-  # Min price to apply discount
-  min_price = Float::INFINITY
-  
-  tiers.each do |tier|
-    if tier[0][0] < min_price
-      min_price = tier[0][0]
-    end
+class TeiredCampaign
+  def initialize(selector, thresholds, discount)
+    @selector = selector
+    @thresholds = thresholds
+    @discount = discount
   end
-  
-  return Input.cart.subtotal_price_was >= Money.new(cents: min_price)
-end
 
-def runCampaign(discount_code, tiers)
-  if Input.cart.discount_code.code == discount_code
-    # Stop campaign if the cart doesn't meet our requirement
-    unless isApplicable?(tiers)
-      Input.cart.discount_code.reject({ message: "Your cart does not meet the requirements for the #{Input.cart.discount_code.code} discount code!" })
-      return
+  def run(cart)
+    discount = nil
+
+    # Loop through all the threshold and generate applicable discount
+    @thresholds.each do |threshold|
+      next unless cart.subtotal_price_was.cents >= threshold[:spend]
+
+      percentage = threshold[:percentage]
+      message = "You've earned #{percentage}% off for spending more than $#{threshold[:spend]/100}."       
+      discount = @discount.new(percentage, message)
+    end
+
+    applicable_items = cart.line_items.select do |line_item|
+      @selector.match?(line_item)
     end
     
-    # Loop through all the discount info and apply discount to applicable items
-    tiers.each do |tier|
-      min_price = Money.new(cents: tier[0][0])
-      max_price = Money.new(cents: tier[0][1])
-      percentage = tier[1]
-      message = "You've earned #{percentage}% off for spending more than $#{tier[0][0]/100}."
-      
-      next unless Input.cart.subtotal_price_was >= min_price and Input.cart.subtotal_price_was < max_price
-      discount = PercentageDiscountPerLineItem.new(percentage, message)
-        
-      Input.cart.line_items.each do |line_item|
-         discount.apply(line_item)
+    if discount
+      applicable_items.each do |line_item|
+          discount.apply(line_item)
       end
     end
   end
 end
 
-runCampaign('TEST', TIERS)
+# Define spending thresholds, from lowest spend to highest spend.
+SPENDING_THRESHOLDS = [
+  {
+    spend: 100000,
+    percentage: 10
+  },
+  {
+    spend: 150000,
+    percentage: 15
+  },
+  {
+    spend: 300000,   # spend amount (in cents)
+    percentage: 20   # percentage discount
+  }
+    
+]
+
+CAMPAIGNS = [
+  TeiredCampaign.new(
+    PlaceholderSelector.new(),
+    SPENDING_THRESHOLDS,
+    PercentageDiscountPerLineItem # a discount class
+  )
+]
+
+# Iterate through each of the discount campaigns.
+CAMPAIGNS.each do |campaign|
+  # Apply the campaign onto the cart.
+  campaign.run(Input.cart)
+end
 
 Output.cart = Input.cart
