@@ -21,12 +21,12 @@ class PercentageDiscountPerProduct
 
   def apply(item_info)
     # line item to apply discount
-    line_item = item_info['item'];
+    line_item = item_info[:item];
     # how many products to apply discount in this line item
-    count = item_info['count'];
+    count = item_info[:count];
     
     # Calculate the discount for this line item
-    line_discount = line_item.line_price * (1/line_item.quantity) * @percent * count
+    line_discount = line_item.line_price * (1.0/line_item.quantity) * @percent * count
 
     # Calculated the discounted line price
     new_line_price = line_item.line_price - line_discount
@@ -64,15 +64,15 @@ class LowToHighPartitionerNoSplit
       break if discounted_items_remaining <= 0
       # The item will be discounted
       discounted_item = {
-        'item' => line_item,
-        'count' => 0
+        item: line_item,
+        count: 0
       }
       
       if line_item.quantity > discounted_items_remaining
         # If the item has more quantity than what must be discounted
-        discounted_item['count'] = discounted_items_remaining;
+        discounted_item[:count] = discounted_items_remaining;
       else
-        discounted_item['count'] = line_item.quantity
+        discounted_item[:count] = line_item.quantity
       end
 
       # Decrement the items left to be discounted
@@ -115,8 +115,10 @@ class BogoCampaign
 
   def run(cart)
     applicable_items = cart.line_items.select do |line_item|
+      puts line_item.variant.product.tags
       @selector.match?(line_item)
     end
+    
     discounted_items = @partitioner.partition(cart, applicable_items)
 
     discounted_items.each do |line_item|
@@ -127,9 +129,9 @@ end
 
 CAMPAIGNS = [
   BogoCampaign.new(
-    TagSelector.new("btgo"),
-    PercentageDiscountPerProduct.new(100, "Buy two Get One Free"),
-    LowToHighPartitionerNoSplit.new(2,1)
+    TagSelector.new("sale"),
+    PercentageDiscountPerProduct.new(100, "Buy one Get One Free"),
+    LowToHighPartitionerNoSplit.new(1,1)
   )
 ]
 
