@@ -11,6 +11,12 @@ class TagSelector
   end
 end
 
+class PlaceholderSelector
+  def match?(line_item)
+    return true
+  end
+end
+
 class PercentageDiscountPerProduct
   def initialize(percent, message)
     # Calculate the percentage, while ensuring that Decimal values are used in
@@ -41,7 +47,10 @@ class PercentageDiscountPerProduct
   end
 end
 
-class LowToHighPartitionerNoSplit
+
+# - Select Y every X (not including X)
+# - Low to high without split
+class EveryXGetYNoSplit
   def initialize(paid_item_count, discounted_item_count)
     @paid_item_count = paid_item_count
     @discounted_item_count = discounted_item_count
@@ -53,7 +62,8 @@ class LowToHighPartitionerNoSplit
     # Find the total quantity of items
     total_applicable_quantity = sorted_items.map(&:quantity).reduce(0, :+)
     # Find the quantity of items that must be discounted
-    discounted_items_remaining = Integer(total_applicable_quantity / (@paid_item_count + @discounted_item_count) * @discounted_item_count)
+    discounted_items_remaining = Integer(total_applicable_quantity / (@paid_item_count + @discounted_item_count)) * @discounted_item_count +
+                                  (total_applicable_quantity % (@paid_item_count + @discounted_item_count) > @paid_item_count ? total_applicable_quantity % (@paid_item_count + @discounted_item_count) - @paid_item_count : 0);
     
     # Create an array of items to return
     discounted_items = []
@@ -81,32 +91,13 @@ class LowToHighPartitionerNoSplit
       # Add the item to be returned
       discounted_items.push(discounted_item)
     end
-  # Example
-  # ------- Check to see if additional discount code is used. If used, add customer discount code and remove BOGO. Same applies if discount code is removed. Apply BOGO instead.
-        cart_discounted_subtotal =
-      case cart.discount_code
-      when CartDiscount::Percentage
-        if cart.subtotal_price >= cart.discount_code.minimum_order_amount
-          cart.subtotal_price * ((Decimal.new(100) - cart.discount_code.percentage) / 100)
-        else
-          cart.subtotal_price
-        end
-      when CartDiscount::FixedAmount
-        if cart.subtotal_price >= cart.discount_code.minimum_order_amount
-          [cart.subtotal_price - cart.discount_code.amount, Money.new(0)].max
-        else
-          cart.subtotal_price
-        end
-      else
-        cart.subtotal_price
-      end
     #--- 
     # Return the items to be discounted
     discounted_items
   end
 end
 
-class BogoCampaign
+class BogoNoSplit
   def initialize(selector, discount, partitioner)
     @selector = selector
     @discount = discount
@@ -128,10 +119,10 @@ class BogoCampaign
 end
 
 CAMPAIGNS = [
-  BogoCampaign.new(
-    TagSelector.new("sale"),
-    PercentageDiscountPerProduct.new(100, "Buy one Get One Free"),
-    LowToHighPartitionerNoSplit.new(1,1)
+  BogoNoSplit.new(
+    PlaceholderSelector.new(),
+    PercentageDiscountPerProduct.new(100, "Buy 1 Get 1 Free"),
+    EveryXGetYNoSplit.new(1,1)
   )
 ]
 

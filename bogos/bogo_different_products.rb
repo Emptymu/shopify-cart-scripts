@@ -36,7 +36,9 @@ class PercentageDiscount
   end
 end
 
-class BuyOneGetAnotherPartitioner
+# - Select Y every X (different products)
+# - Low to high no split
+class BuyXGetYDifferentProducts
   def initialize(paid_item_count, discounted_item_count)
     @paid_item_count = paid_item_count
     @discounted_item_count = discounted_item_count
@@ -100,7 +102,7 @@ class BuyOneGetAnotherPartitioner
   end
 end
 
-class BuyOneGetAnotherCampaign
+class BogoDifferentProducts
   def initialize(paid_selector, applicable_selector, discount, partitioner)
     @paid_selector = paid_selector
     @applicable_selector = applicable_selector
@@ -126,13 +128,13 @@ class BuyOneGetAnotherCampaign
 end
 
 CAMPAIGNS = [
-  BuyOneGetAnotherCampaign.new(
+  BogoDifferentProducts.new(
     # product to buy id list
     ListHasItemSelector.new([143728738325, 121915867157]),
     # product to get id list
     ListHasItemSelector.new([223402590229]),
     PercentageDiscount.new(100, "Free Item!"),
-    BuyOneGetAnotherPartitioner.new(1,1)
+    BuyXGetYDifferentProducts.new(1,1)
   )
 ]
 
